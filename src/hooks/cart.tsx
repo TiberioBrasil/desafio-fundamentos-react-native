@@ -30,22 +30,76 @@ const CartProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     async function loadProducts(): Promise<void> {
-      // TODO LOAD ITEMS FROM ASYNC STORAGE
+      const productsAsyncStorage = await AsyncStorage.getItem('products');
+
+      if (productsAsyncStorage) {
+        setProducts(JSON.parse(productsAsyncStorage));
+      }
     }
 
     loadProducts();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      await AsyncStorage.setItem('products', JSON.stringify(products));
+    })();
+  }, [products]);
+
   const addToCart = useCallback(async product => {
-    // TODO ADD A NEW ITEM TO THE CART
+    setProducts(item => {
+      const newProductsAsyncStorage = [...item];
+
+      const checkIfProductAlreadyExists = newProductsAsyncStorage.findIndex(
+        p => p.id === product.id,
+      );
+
+      if (checkIfProductAlreadyExists === -1) {
+        newProductsAsyncStorage.push({ ...product, quantity: 1 });
+      } else {
+        newProductsAsyncStorage[checkIfProductAlreadyExists].quantity += 1;
+      }
+
+      return newProductsAsyncStorage;
+    });
   }, []);
 
   const increment = useCallback(async id => {
-    // TODO INCREMENTS A PRODUCT QUANTITY IN THE CART
+    setProducts(item => {
+      const newProductsAsyncStorage = [...item];
+
+      const checkIfProductAlreadyExists = newProductsAsyncStorage.findIndex(
+        p => p.id === id,
+      );
+
+      if (checkIfProductAlreadyExists !== -1) {
+        newProductsAsyncStorage[checkIfProductAlreadyExists].quantity += 1;
+      }
+
+      return newProductsAsyncStorage;
+    });
   }, []);
 
-  const decrement = useCallback(async id => {
-    // TODO DECREMENTS A PRODUCT QUANTITY IN THE CART
+  const decrement = useCallback(id => {
+    setProducts(item => {
+      const newProductsAsyncStorage = [...item];
+
+      const checkIfProductAlreadyExists = newProductsAsyncStorage.findIndex(
+        p => p.id === id,
+      );
+
+      if (checkIfProductAlreadyExists !== -1) {
+        if (
+          newProductsAsyncStorage[checkIfProductAlreadyExists].quantity <= 1
+        ) {
+          newProductsAsyncStorage.splice(checkIfProductAlreadyExists, 1);
+        } else {
+          newProductsAsyncStorage[checkIfProductAlreadyExists].quantity -= 1;
+        }
+      }
+
+      return newProductsAsyncStorage;
+    });
   }, []);
 
   const value = React.useMemo(
